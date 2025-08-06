@@ -25,6 +25,29 @@
 
 html {
     scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+}
+
+/* Enable hardware acceleration for smooth scrolling */
+* {
+    /* Remove universal transform as it can cause issues */
+}
+
+/* Apply hardware acceleration selectively to animated elements */
+.gradient-orb,
+.floating-card,
+.feature-card,
+.nav,
+.cta-button,
+.contact-button,
+.scroll-indicator {
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    -o-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
 body {
@@ -34,6 +57,10 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     font-weight: 300;
+    /* Optimize for smooth scrolling */
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+    transform: translateZ(0);
 }
 
 /* Grain Overlay */
@@ -63,6 +90,9 @@ body {
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(0, 0, 0, 0.8);
+    /* Optimize for smooth background transitions */
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    contain: layout style paint;
 }
 
 .nav-container {
@@ -162,6 +192,11 @@ body {
     filter: var(--blur-heavy);
     opacity: 0.6;
     animation: float 20s ease-in-out infinite;
+    /* Hardware acceleration for smooth animations */
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
 .orb-1 {
@@ -511,6 +546,10 @@ body {
     position: relative;
     transform: rotate(5deg);
     animation: cardFloat 6s ease-in-out infinite;
+    /* Hardware acceleration */
+    will-change: transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
 @keyframes cardFloat {

@@ -1,4 +1,4 @@
-// Smooth scrolling for navigation links
+// Optimized smooth scrolling for navigation links
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', function(e) {
         e.preventDefault();
@@ -7,26 +7,42 @@ document.querySelectorAll('.nav-link').forEach(link => {
         const targetSection = document.querySelector(targetId);
         
         if (targetSection) {
-            const offsetTop = targetSection.offsetTop - 80; // Account for fixed nav
-            window.scrollTo({
-                top: offsetTop,
-                behavior: 'smooth'
+            // Use native smooth scrolling which is more performant
+            targetSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
             });
         }
     });
 });
 
-// Parallax effect for gradient orbs
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
+// Optimized parallax effect with throttling and RAF
+let ticking = false;
+let scrollY = 0;
+
+function updateParallax() {
     const orbs = document.querySelectorAll('.gradient-orb');
     
     orbs.forEach((orb, index) => {
-        const speed = 0.5 + (index * 0.2);
-        const yPos = -(scrolled * speed);
-        orb.style.transform = `translateY(${yPos}px)`;
+        const speed = 0.3 + (index * 0.1); // Reduced intensity for smoother scrolling
+        const yPos = -(scrollY * speed);
+        orb.style.transform = `translate3d(0, ${yPos}px, 0)`; // Use translate3d for hardware acceleration
     });
-});
+    
+    ticking = false;
+}
+
+function requestTick() {
+    if (!ticking) {
+        requestAnimationFrame(updateParallax);
+        ticking = true;
+    }
+}
+
+window.addEventListener('scroll', () => {
+    scrollY = window.pageYOffset;
+    requestTick();
+}, { passive: true }); // Passive listener for better performance
 
 // Intersection Observer for fade-in animations
 const observerOptions = {
@@ -55,40 +71,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Mouse movement effect for hero gradient orbs
+// Optimized mouse movement effect with throttling
 let mouseX = 0;
 let mouseY = 0;
-let isMouseMoving = false;
+let mouseMoveTicking = false;
 
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX / window.innerWidth;
-    mouseY = e.clientY / window.innerHeight;
-    isMouseMoving = true;
-    
-    clearTimeout(isMouseMoving);
-    isMouseMoving = setTimeout(() => {
-        isMouseMoving = false;
-    }, 150);
-});
-
-// Subtle mouse tracking for orbs
-function updateOrbPositions() {
+function updateMouseOrbs() {
     const orbs = document.querySelectorAll('.gradient-orb');
     
     orbs.forEach((orb, index) => {
-        if (isMouseMoving) {
-            const intensity = (index + 1) * 0.02;
-            const xOffset = (mouseX - 0.5) * intensity * 100;
-            const yOffset = (mouseY - 0.5) * intensity * 100;
-            
-            orb.style.transform += ` translate(${xOffset}px, ${yOffset}px)`;
-        }
+        const intensity = (index + 1) * 0.01; // Reduced intensity
+        const xOffset = (mouseX - 0.5) * intensity * 50;
+        const yOffset = (mouseY - 0.5) * intensity * 50;
+        
+        // Combine with existing scroll transform
+        const currentScrollY = window.pageYOffset;
+        const scrollSpeed = 0.3 + (index * 0.1);
+        const scrollYPos = -(currentScrollY * scrollSpeed);
+        
+        orb.style.transform = `translate3d(${xOffset}px, ${scrollYPos + yOffset}px, 0)`;
     });
     
-    requestAnimationFrame(updateOrbPositions);
+    mouseMoveTicking = false;
 }
 
-updateOrbPositions();
+// Throttled mouse move handler
+document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX / window.innerWidth;
+    mouseY = e.clientY / window.innerHeight;
+    
+    if (!mouseMoveTicking) {
+        requestAnimationFrame(updateMouseOrbs);
+        mouseMoveTicking = true;
+    }
+}, { passive: true });
 
 // Button interaction effects
 document.querySelectorAll('.cta-button, .contact-button').forEach(button => {
@@ -109,19 +125,35 @@ document.querySelectorAll('.cta-button, .contact-button').forEach(button => {
     });
 });
 
-// Navigation bar background on scroll
-window.addEventListener('scroll', () => {
+// Optimized navigation bar background on scroll
+let navTicking = false;
+let lastScrollY = 0;
+
+function updateNavigation() {
     const nav = document.querySelector('.nav');
-    const scrolled = window.pageYOffset;
+    const currentScrollY = window.pageYOffset;
     
-    if (scrolled > 100) {
-        nav.style.background = 'rgba(0, 0, 0, 0.95)';
-        nav.style.backdropFilter = 'blur(25px)';
-    } else {
-        nav.style.background = 'rgba(0, 0, 0, 0.8)';
-        nav.style.backdropFilter = 'blur(20px)';
+    // Only update if scroll position changed significantly
+    if (Math.abs(currentScrollY - lastScrollY) > 5) {
+        if (currentScrollY > 100) {
+            nav.style.background = 'rgba(0, 0, 0, 0.95)';
+            nav.style.backdropFilter = 'blur(25px)';
+        } else {
+            nav.style.background = 'rgba(0, 0, 0, 0.8)';
+            nav.style.backdropFilter = 'blur(20px)';
+        }
+        lastScrollY = currentScrollY;
     }
-});
+    
+    navTicking = false;
+}
+
+window.addEventListener('scroll', () => {
+    if (!navTicking) {
+        requestAnimationFrame(updateNavigation);
+        navTicking = true;
+    }
+}, { passive: true });
 
 // Floating card interactive tilt effect
 document.querySelector('.floating-card')?.addEventListener('mousemove', function(e) {
@@ -142,19 +174,25 @@ document.querySelector('.floating-card')?.addEventListener('mouseleave', functio
     this.style.transform = 'rotate(5deg) rotateX(0deg) rotateY(0deg) translateZ(0px)';
 });
 
-// Enhanced scroll indicator
-window.addEventListener('scroll', () => {
+// Combine scroll indicator with other scroll effects for better performance
+let indicatorTicking = false;
+
+function updateScrollIndicator() {
     const scrollIndicator = document.querySelector('.scroll-indicator');
-    const scrolled = window.pageYOffset;
+    const currentScrollY = window.pageYOffset;
     
-    if (scrolled > 100) {
+    if (currentScrollY > 100) {
         scrollIndicator.style.opacity = '0';
         scrollIndicator.style.transform = 'translateX(-50%) translateY(20px)';
     } else {
         scrollIndicator.style.opacity = '1';
         scrollIndicator.style.transform = 'translateX(-50%) translateY(0)';
     }
-});
+    
+    indicatorTicking = false;
+}
+
+// This is combined with the main scroll handler now
 
 // Add subtle animations to feature icons
 document.querySelectorAll('.feature-icon').forEach(icon => {
@@ -210,15 +248,58 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
-// Add performance monitoring
-let lastScrollTime = 0;
-window.addEventListener('scroll', () => {
-    const now = performance.now();
-    if (now - lastScrollTime > 16) { // Limit to ~60fps
-        lastScrollTime = now;
-        // Scroll-based animations here
+// Master scroll handler combining all scroll effects for optimal performance
+let masterScrollTicking = false;
+let lastMasterScrollY = 0;
+
+function masterScrollHandler() {
+    const currentScrollY = window.pageYOffset;
+    const scrollDelta = Math.abs(currentScrollY - lastMasterScrollY);
+    
+    // Only process if scroll changed significantly (reduces unnecessary calculations)
+    if (scrollDelta > 1) {
+        // Update navigation
+        const nav = document.querySelector('.nav');
+        if (currentScrollY > 100) {
+            nav.style.background = 'rgba(0, 0, 0, 0.95)';
+            nav.style.backdropFilter = 'blur(25px)';
+        } else {
+            nav.style.background = 'rgba(0, 0, 0, 0.8)';
+            nav.style.backdropFilter = 'blur(20px)';
+        }
+        
+        // Update scroll indicator
+        const scrollIndicator = document.querySelector('.scroll-indicator');
+        if (currentScrollY > 100) {
+            scrollIndicator.style.opacity = '0';
+            scrollIndicator.style.transform = 'translateX(-50%) translateY(20px)';
+        } else {
+            scrollIndicator.style.opacity = '1';
+            scrollIndicator.style.transform = 'translateX(-50%) translateY(0)';
+        }
+        
+        // Update parallax orbs
+        const orbs = document.querySelectorAll('.gradient-orb');
+        orbs.forEach((orb, index) => {
+            const speed = 0.3 + (index * 0.1);
+            const yPos = -(currentScrollY * speed);
+            const mouseXOffset = (mouseX - 0.5) * (index + 1) * 0.01 * 50;
+            const mouseYOffset = (mouseY - 0.5) * (index + 1) * 0.01 * 50;
+            orb.style.transform = `translate3d(${mouseXOffset}px, ${yPos + mouseYOffset}px, 0)`;
+        });
+        
+        lastMasterScrollY = currentScrollY;
     }
-});
+    
+    masterScrollTicking = false;
+}
+
+window.addEventListener('scroll', () => {
+    if (!masterScrollTicking) {
+        requestAnimationFrame(masterScrollHandler);
+        masterScrollTicking = true;
+    }
+}, { passive: true });
 
 // Error handling for missing elements
 function safeQuerySelector(selector) {
